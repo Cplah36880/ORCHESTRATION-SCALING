@@ -1,0 +1,313 @@
+Phase 1 – Update EC2
+sudo dnf update -y
+
+or (Amazon Linux 2)
+
+sudo yum update -y
+
+Check OS
+
+cat /etc/os-release
+Phase 2 – Install Git
+sudo dnf install git -y
+
+Check
+
+git --version
+Phase 3 – Clone Repository
+git clone https://github.com/<your-github-username>/StreamingApp.git
+
+Go inside
+
+cd StreamingApp
+
+See files
+
+ls
+Phase 4 – Configure Git
+git config --global user.name "Your Name"
+git config --global user.email "youremail@gmail.com"
+Phase 5 – Sync Fork
+git remote -v
+git remote add upstream https://github.com/UnpredictablePrashant/StreamingApp.git
+git fetch upstream
+git checkout main
+git merge upstream/main
+
+Push
+
+git push origin main
+Phase 6 – Install Docker
+sudo dnf install docker -y
+
+Start Docker
+
+sudo systemctl start docker
+
+Enable
+
+sudo systemctl enable docker
+
+Status
+
+sudo systemctl status docker
+
+Version
+
+docker --version
+
+Add user
+
+sudo usermod -aG docker ec2-user
+
+Refresh
+
+newgrp docker
+Phase 7 – Build Docker Images
+
+Frontend
+
+cd frontend
+docker build -t frontend .
+
+Backend
+
+cd ../backend
+docker build -t backend .
+
+Check images
+
+docker images
+
+Run container
+
+docker run -d -p 3000:3000 frontend
+docker run -d -p 5000:5000 backend
+
+Containers
+
+docker ps
+
+Stop
+
+docker stop CONTAINER_ID
+
+Remove
+
+docker rm CONTAINER_ID
+Phase 8 – Install AWS CLI
+sudo dnf install awscli -y
+
+Version
+
+aws --version
+
+Configure
+
+aws configure
+
+Verify
+
+aws sts get-caller-identity
+Phase 9 – Amazon ECR
+
+Create repositories
+
+aws ecr create-repository --repository-name frontend
+aws ecr create-repository --repository-name backend
+
+Login
+
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
+
+Tag
+
+docker tag frontend ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
+docker tag backend ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+
+Push
+
+docker push ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
+docker push ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+Phase 10 – Install Java
+sudo dnf install java-17-amazon-corretto -y
+
+Version
+
+java -version
+Phase 11 – Install Jenkins
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo dnf install jenkins -y
+
+Start
+
+sudo systemctl start jenkins
+
+Enable
+
+sudo systemctl enable jenkins
+
+Status
+
+sudo systemctl status jenkins
+
+Password
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+Phase 12 – Jenkins Docker Permission
+sudo usermod -aG docker jenkins
+
+Restart
+
+sudo systemctl restart jenkins
+Phase 13 – Install kubectl
+curl -LO https://dl.k8s.io/release/stable/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+Version
+
+kubectl version --client
+Phase 14 – Install eksctl
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" | tar xz
+sudo mv eksctl /usr/local/bin
+
+Version
+
+eksctl version
+Phase 15 – Create EKS Cluster
+eksctl create cluster \
+--name streaming-cluster \
+--region ap-south-1 \
+--nodegroup-name workers \
+--node-type t3.medium \
+--nodes 2
+
+List
+
+eksctl get cluster
+
+Delete
+
+eksctl delete cluster --name streaming-cluster
+Phase 16 – Configure kubectl
+aws eks update-kubeconfig --region ap-south-1 --name streaming-cluster
+
+Nodes
+
+kubectl get nodes
+
+Pods
+
+kubectl get pods -A
+Phase 17 – Install Helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+Version
+
+helm version
+
+Create Chart
+
+helm create streaming-app
+
+Install
+
+helm install streaming streaming-app
+
+Upgrade
+
+helm upgrade streaming streaming-app
+
+List
+
+helm list
+
+Uninstall
+
+helm uninstall streaming
+Phase 18 – Kubernetes
+
+Deploy
+
+kubectl apply -f deployment.yaml
+
+Service
+
+kubectl apply -f service.yaml
+
+Ingress
+
+kubectl apply -f ingress.yaml
+
+Pods
+
+kubectl get pods
+
+Services
+
+kubectl get svc
+
+Describe
+
+kubectl describe pod POD_NAME
+
+Logs
+
+kubectl logs POD_NAME
+
+Delete
+
+kubectl delete pod POD_NAME
+Phase 19 – CloudWatch
+sudo dnf install amazon-cloudwatch-agent -y
+
+Start
+
+sudo systemctl start amazon-cloudwatch-agent
+
+Status
+
+sudo systemctl status amazon-cloudwatch-agent
+Phase 20 – SNS
+
+List topics
+
+aws sns list-topics
+
+Create topic
+
+aws sns create-topic --name deployment-alert
+
+Subscribe
+
+aws sns subscribe \
+--topic-arn TOPIC_ARN \
+--protocol email \
+--notification-endpoint your@email.com
+
+Publish
+
+aws sns publish \
+--topic-arn TOPIC_ARN \
+--message "Deployment Successful"
+Phase 21 – Docker Cleanup
+docker ps
+docker images
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi $(docker images -q)
+Phase 22 – Git Push
+git status
+git add .
+git commit -m "Completed Hero Vired Project"
+git push origin main
+Phase 23 – Verification
+kubectl get pods
+kubectl get svc
+kubectl get deployments
+kubectl get nodes
+docker images
+aws ecr describe-repositories
+aws sts get-caller-identity
